@@ -32,7 +32,7 @@ end
 
 function M:start()
     print("开启一桌")
-    local area = skynet.call("area_mgr", "lua", "get_area", self.game_id)
+    local area = skynet.call("game_mgr", "lua", "get_game", self.game_id)
     self.getting_area = true
     skynet.send(area.addr, "lua", "create_room", self:pack())
 end
