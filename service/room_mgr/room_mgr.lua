@@ -20,12 +20,10 @@ end
 function M:join(room_id, player_info)
     local room = self.room_tbl[room_id]
     if not room then
-        return false
+        return {errmsg = "room not exist"}
     end
 
-    room:add(player_info)
-
-    return true
+    return room:add(player_info)
 end
 
 function M:close(room_id)

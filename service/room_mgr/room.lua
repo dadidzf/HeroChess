@@ -28,6 +28,9 @@ function M:add(player_info)
         self.ready = true
         G.room_mgr:add_ready(self)
     end
+
+    self:send_other_client(#self.player_list, "room.user_enter", {account = player_info.account})
+    return self:pack()
 end
 
 function M:start()
@@ -43,6 +46,26 @@ function M:pack()
         owner_account = self.owner_account,
         player_list = self.player_list
     }
+end
+
+function M:send_client(seat, proto_name, msg)
+    local player = self.player_list[seat]
+    skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+end
+
+function M:send_all_client(proto_name, msg)
+    for _, player in ipairs(self.player_list) do
+        skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+    end
+end
+
+function M:send_other_client(myseat, proto_name, msg)
+    local me = self.player_list[myseat]
+    for id, player in ipairs(self.player_list) do
+        if id ~= myseat then
+            skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+        end
+    end
 end
 
 return M

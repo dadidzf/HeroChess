@@ -9,6 +9,7 @@ local _idTbl = {
     {name = "login.login_baseapp"},
     {name = "room.create_room"},
     {name = "room.join_room"},
+    {name = "room.user_enter"},
     {name = "room.room_begin"},
     {name = "match.dealt"}
 }

@@ -106,7 +106,7 @@ function M:send(fd, proto_name, msg)
     local proto_id = msg_define.nameToId(proto_name)
     local str = utils.table_2_str(msg)
     skynet.error("send msg:"..proto_name)
-    socket.write(fd, packer.pack(proto_id, proto_id))
+    socket.write(fd, packer.pack(proto_id, msg))
 end
 -------------------网络消息回调函数结束------------------
 

@@ -12,8 +12,8 @@ end
 function M.join_room(fd, request)
     local player = player_mgr:get_by_fd(fd)
     local room_id = request.room_id
-    skynet.call("room_mgr", "lua", "join_room", room_id, {base_app = skynet.self(), account = player:get_account()})
-    return {room_id = room_id}
+    local player_list = skynet.call("room_mgr", "lua", "join_room", room_id, {base_app = skynet.self(), account = player:get_account()})
+    return player_list
 end
 
 return M
