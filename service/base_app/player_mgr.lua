@@ -1,28 +1,33 @@
-local M = {}
+local player_mgr = {}
 
-function M:init()
+function player_mgr:init()
     self.player_tbl = {}
     self.fd_2_player = {}
+    self.account_2_game = {}
 end
 
-function M:get_by_account(account)
+function player_mgr:get_by_account(account)
     return self.player_tbl[account]
 end
 
-function M:get_by_fd(fd)
+function player_mgr:get_by_fd(fd)
     return self.fd_2_player[fd]
 end
 
-function M:add(obj)
+function player_mgr:add(obj)
     self.player_tbl[obj.account] = obj
     self.fd_2_player[obj.fd] = obj
 end
 
-function M:remove(obj)
+function player_mgr:remove(obj)
     self.player_tbl[obj.account] = nil
     self.fd_2_player[obj.fd] = nil
 end
 
-return M
+function player_mgr:bind_account_2_game(account, game_addr)
+    self.account_2_game[account] = game_addr
+end
+
+return player_mgr
 
 

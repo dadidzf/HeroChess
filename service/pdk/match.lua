@@ -10,19 +10,21 @@
 local mjlib = require "base.mjlib"
 local utils = require "utils"
 
-local M = {}
+local match = {}
 
-M.__index = M
+match:__index = match
 
-function M.new(...)
+function match:new(...)
     local o = {}
-    setmetatable(o, M)
-    M.init(o, ...)
+    setmetatable(o, match)
+    match:init(o, ...)
     return o
 end
 
-function M:init(room)
-    self.room = room
+function match:init(info)
+    self.id = info.room_id
+    self.player_list = info.player_list
+
     self.cards = {}
 
     self.active_seat = 1
@@ -34,7 +36,7 @@ function M:init(room)
     utils.print(self.players)
 end
 
-function M:init_player(i)
+function match:init_player(i)
     local info = {
         seat = i,
         stand_cards = {},
@@ -44,7 +46,7 @@ function M:init_player(i)
     return info
 end
 
-function M:begin()
+function match:begin()
     -- 洗牌
     self.cards = mjlib.create(true)
     self.cards_num = #self.cards
@@ -62,7 +64,7 @@ function M:begin()
     end
 end
 
-function M:dealt_card(tbl, num)
+function match:dealt_card(tbl, num)
     self.cards_num = self.cards_num - num
     for _=1,34 do
         table.insert(tbl, 0)
@@ -74,7 +76,7 @@ function M:dealt_card(tbl, num)
     end
 end
 
-function M:get_card()
+function match:get_card()
     local player = self.players[self.active_seat]
 
     local card = self.cards[self.card_num]
@@ -82,10 +84,30 @@ function M:get_card()
     self.card_num = self.card_num - 1
 end
 
-function M:out_card(card)
+function match:out_card(card)
     local player = self.players[self.active_seat]
     player.stand_card[card] = player.stand_card[card] - 1
     self.status = "out_card"
 end
 
-return M
+function match:send_client(seat, proto_name, msg)
+    local player = self.player_list[seat]
+    skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+end
+
+function match:send_all_client(proto_name, msg)
+    for _, player in ipairs(self.player_list) do
+        skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+    end
+end
+
+function match:send_other_client(myseat, proto_name, msg)
+    local me = self.player_list[myseat]
+    for id, player in ipairs(self.player_list) do
+        if id ~= myseat then
+            skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+        end
+    end
+end
+
+return match

@@ -8,7 +8,8 @@ local function init()
     G.timer_mgr = timer_mgr.new()
     G.room_mgr = room_mgr
     room_mgr:init()
-    G.room_timer = G.timer_mgr:add(1*1000, -1, function() room_mgr:check_ready() end)
+
+    --G.room_timer = G.timer_mgr:add(1*1000, -1, function() room_mgr:check_ready() end)
 end
 
 local CMD = {}
@@ -21,8 +22,12 @@ function CMD.join_room(room_id, player_info)
     return room_mgr:join(room_id, player_info)
 end
 
-function CMD.room_begin(room_id)
-    room_mgr:room_begin(room_id)
+function CMD.user_ready(account, is_ready)
+    return room_mgr:user_ready(room_id, account, is_ready)
+end
+
+function CMD.dissolve_room(account, is_dissolve)
+    return room_mgr:dissolve_room(account, is_dissolve)
 end
 
 local function dispatch(_, session, cmd, ...)

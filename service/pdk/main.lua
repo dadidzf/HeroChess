@@ -1,26 +1,30 @@
 local skynet = require "skynet"
 local player_mgr = require "player_mgr"
-local room = require "room"
-local room_mgr = require "room_mgr"
+local match = require "match"
+local match_mgr = require "match_mgr"
 
-local area_id = ...
-area_id = tonumber(area_id)
+local id = tonumber(...)
 
 local CMD = {}
 
-function CMD.create_room(info)
-    print("创建游戏")
-
-    local obj = room.new(info)
-    room_mgr:add(obj)
+function CMD.create_game(info)
+    local obj = match.new(info)
+    match_mgr:add(obj)
     obj:begin()
 end
 
-function CMD.leave()
-
+function CMD.dissolve_game(room_info)
+    match_mgr:remove_by_id[room_info.room_id]
 end
 
-function CMD.test()
+function CMD.on_user_offline(info)
+    local id = info.room_id
+    local account = info.account
+end
+
+function CMD.on_user_login(info)
+    local id = info.room_id
+    local player_info = info.player_info
 end
 
 skynet.start(function ()

@@ -1,7 +1,6 @@
 local MsgDefine = {}
 
 local _idTbl = {
-
     -- 登陆协议
     {name = "login.login"},
     {name = "login.register"},
@@ -10,8 +9,8 @@ local _idTbl = {
     {name = "room.create_room"},
     {name = "room.join_room"},
     {name = "room.user_enter"},
-    {name = "room.room_begin"},
-    {name = "match.dealt"}
+    {name = "room.user_ready"},
+    {name = "room.dissolve_room"},
 }
 
 local _nameTbl = {}

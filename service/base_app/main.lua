@@ -16,15 +16,6 @@ function CMD.start(conf)
     msg_handler.init()
 end
 
-function CMD.room_begin(msg)
-    local obj = player_mgr:get_by_account(msg.account)
-    if not obj then
-        return
-    end
-
-    obj:room_begin(msg)
-end
-
 function CMD.get_clients()
     return {clients = sock_mgr:get_clients()}
 end
@@ -36,6 +27,10 @@ function CMD.sendto_client(account, proto_name, msg)
     end
 
     obj:sendto_client(proto_name, msg)
+end
+
+function CMD.bind_account_2_game(account, game)
+    player_mgr:bind_account_2_game(account, game.addr)
 end
 
 skynet.start(function()

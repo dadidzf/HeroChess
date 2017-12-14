@@ -1,67 +1,109 @@
 local id_mgr = require "id_mgr"
 local room = require "room"
+local game_list = require "game_list"
 
-local M = {}
+local room_mgr = {}
 
-function M:init()
+function room_mgr:init()
     id_mgr:init()
+
     self.room_tbl = {}
     self.player_2_room = {}
-    self.ready_tbl = {}
+
+    self.game_2_room = {}
+    for game_id, _ in ipairs(game_list) do
+        self.game_2_room[game_id] = {}
+    end
 end
 
-function M:create(game_id, player_info)
-    local id = id_mgr:gen_id(game_id)
-    self.room_tbl[id] = room.new(id, game_id, player_info)
-    self.player_2_room[player_info.account] = id
+function room_mgr:create(game_id, player_info)
+    local room_id = id_mgr:gen_id(game_id)
+    room = room.new(room_id, game_id, player_info)
+    self.room_tbl[room_id] = room
+    self.player_2_room[player_info.account] = room 
+    table.insert(self.game_2_room[game_id], room)
+
     return id
 end
 
-function M:join(room_id, player_info)
+function room_mgr:get_room_by_owner(account)
+    local room = self.player_2_room[account] 
+    if room then
+        if room:get_owner() == account then
+            return room
+        end
+    end
+end
+
+
+--[[
+    客户端消息响应
+--]]
+function room_mgr:join(room_id, player_info)
     local room = self.room_tbl[room_id]
-    if not room then
+    if room then
+        if room:is_full() then
+            return {errmsg = "room is full"}
+        else
+            self.player_2_room[player_info.account] = room_id
+            room:add(player_info)
+            room:send_other_client(#self.player_list, "room.user_enter", {account = player_info.account})
+            return room:pack()
+        end
+    else
         return {errmsg = "room not exist"}
     end
-
-    return room:add(player_info)
 end
 
-function M:close(room_id)
-    local room = self.room_tbl[room_id]
-    self.room_tbl[room_id] = nil
-    for _,v in ipairs(room.player_list) do
-        self.player_2_room[v.account] = nil
+function room_mgr:user_ready(account, is_ready)
+    local room = self.player_2_room[account] 
+    if room then
+        room:user_ready(account, is_ready)
     end
 end
 
-function M:get_room_by_player(account)
-    local id = self.player_2_room[account]
-    if not id then
-        return
+function room_mgr:dissolve_room(account, is_dissolve)
+    local room = self.player_2_room[account] 
+    if room then
+        room:dissolve_room(account, is_dissolve)
     end
-
-    return self.room_tbl[id]
 end
 
-function M:add_ready(room)
-    self.ready_tbl[room.id] = room
-end
 
-function M:check_ready()
-    if not next(self.ready_tbl) then
-        return
+--[[
+    状态响应
+--]]
+function room_mgr:on_user_offline(account)
+    local room = self.player_2_room[account] 
+    if room then
+        room:on_user_offline(account)
     end
+end
 
-    print("check_ready")
-    for id, room in pairs(self.ready_tbl) do
-        room:start()
+function room_mgr:on_user_login(player_info)
+    local room = self.player_2_room[player_info.account]
+    if room then
+        room:on_user_login(player_info)
+        skynet.send(player_info.base_app, "lua", "bind_account_2_game", player.account, room:get_game())
     end
-
-    self.ready_tbl = {}
 end
 
-function M:room_begin(room_id)
-    self:close(room_id)
+function room_mgr:on_room_closed(room_id)
+    local room = self.room_tbl[room_id] 
+    if room then
+        room:clear()
+        for _, player in ipairs(room:get_player_list()) do
+            skynet.send(player.base_app, "lua", "bind_account_2_game", player.account, {addr = nil})
+            self.player_2_room[player.account] = nil
+        end
+
+        self.room_tbl[room_id] = nil
+        id_mgr:id_recover(room_id)
+    end
 end
 
-return M
+function room_mgr:on_room_dissolved(room)
+    self:on_room_closed(room:get_room_id()) 
+end
+
+return room_mgr
