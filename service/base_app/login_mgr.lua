@@ -1,6 +1,7 @@
 local sock_mgr = require "sock_mgr"
 local player = require "player"
 local player_mgr = require "player_mgr"
+local skynet = require "skynet"
 
 local M = {}
 
@@ -13,6 +14,7 @@ function M:auth(fd, msg)
         return {errmsg = "wrong token"}
     else
         sock_mgr:auth_fd(fd)
+        skynet.send("base_app_mgr", "lua", "bind_account_2_baseapp", msg.account, skynet.self())
     end
 
     local obj = player.create(fd, msg.account)

@@ -32,7 +32,7 @@ end
 
 local function dispatch(_, session, cmd, ...)
     local f = CMD[cmd]
-    assert(f, "room_mgr接收到非法lua消息: "..cmd)
+    assert(f, "room_mgr接收到非法lua消息: ".. tostring(cmd))
 
     if session == 0 then
         f(...)

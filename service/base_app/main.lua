@@ -17,7 +17,7 @@ function CMD.start(conf)
 end
 
 function CMD.get_clients()
-    return {clients = sock_mgr:get_clients()}
+    return sock_mgr:get_clients()
 end
 
 function CMD.sendto_client(account, proto_name, msg)
@@ -29,8 +29,8 @@ function CMD.sendto_client(account, proto_name, msg)
     obj:sendto_client(proto_name, msg)
 end
 
-function CMD.bind_account_2_game(account, game)
-    player_mgr:bind_account_2_game(account, game.addr)
+function CMD.bind_account_2_game(account, game_info)
+    player_mgr:bind_account_2_game(account, game_info)
 end
 
 skynet.start(function()
@@ -40,8 +40,9 @@ skynet.start(function()
             return
         end
 
+        print(session, cmd, subcmd)
         local f = CMD[cmd]
-        assert(f, "can't find dispatch handler cmd = "..cmd)
+        assert(f, "can't find dispatch handler cmd = "..tostring(cmd))
 
         if session > 0 then
             return skynet.ret(skynet.pack(f(subcmd, ...)))

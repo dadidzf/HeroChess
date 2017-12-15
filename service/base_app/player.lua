@@ -32,7 +32,7 @@ function M:_create_db()
     local obj = {
         account = self.account,
         nick_name = "Hero"..os.time(),
-        score = 0,
+        exp = 0,
         golds = 0
     }
     db:save_player(obj)
@@ -43,7 +43,7 @@ function M:pack()
     return {
         account = self.account,
         nick_name = self._db.nick_name,
-        score = self._db.score,
+        exp = self._db.exp,
         golds = self._db.golds
     }
 end

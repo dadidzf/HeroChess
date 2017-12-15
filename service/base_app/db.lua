@@ -2,8 +2,8 @@ local MongoLib = require "mongolib"
 local utils = require "utils"
 
 local dbconf = {
-    host="127.0.0.1",
-    port=27017,
+    host = "127.0.0.1",
+    port = 27017,
 --    db="mj_server",
 --    username="yun",
 --    password="yun",

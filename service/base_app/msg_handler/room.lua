@@ -22,6 +22,7 @@ function room.user_ready(fd, request)
 end
 
 function room.dissolve_room(fd, request)
+    local player = player_mgr:get_by_fd(fd)
     skynet.call("room_mgr", "lua", "dissolve_room", player.account, request.is_dissolve)
 end
 

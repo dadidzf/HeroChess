@@ -84,7 +84,7 @@ function room_mgr:on_user_login(player_info)
     local room = self.player_2_room[player_info.account]
     if room then
         room:on_user_login(player_info)
-        skynet.send(player_info.base_app, "lua", "bind_account_2_game", player.account, room:get_game())
+        skynet.send(player_info.base_app, "lua", "bind_account_2_game", player.account, {game = room:get_game(), id = room_id})
     end
 end
 
@@ -93,7 +93,7 @@ function room_mgr:on_room_closed(room_id)
     if room then
         room:clear()
         for _, player in ipairs(room:get_player_list()) do
-            skynet.send(player.base_app, "lua", "bind_account_2_game", player.account, {addr = nil})
+            skynet.send(player.base_app, "lua", "bind_account_2_game", player.account, nil)
             self.player_2_room[player.account] = nil
         end
 

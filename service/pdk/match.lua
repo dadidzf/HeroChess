@@ -1,18 +1,9 @@
---状态定义
-
--- dealt 发牌
--- get_card 摸牌
--- pong 碰
--- kong 杠
--- chow 吃
--- out_card 打出牌
-
 local mjlib = require "base.mjlib"
 local utils = require "utils"
 
 local match = {}
 
-match:__index = match
+match.__index = match
 
 function match:new(...)
     local o = {}
@@ -34,6 +25,9 @@ function match:init(info)
     end
 
     utils.print(self.players)
+end
+
+function match:deal_msg(proto_name, content)
 end
 
 function match:init_player(i)
@@ -88,6 +82,12 @@ function match:out_card(card)
     local player = self.players[self.active_seat]
     player.stand_card[card] = player.stand_card[card] - 1
     self.status = "out_card"
+end
+
+function match:on_user_login(player_info)
+end
+
+function match:on_user_offline(account)
 end
 
 function match:send_client(seat, proto_name, msg)
