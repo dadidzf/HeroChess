@@ -22,6 +22,14 @@ function CMD.join_room(room_id, player_info)
     return room_mgr:join(room_id, player_info)
 end
 
+function CMD.on_user_offline(account)
+    return room_mgr:on_user_offline(account)
+end
+
+function CMD.on_user_login(player_info)
+    return room_mgr:on_user_login(player_info)
+end
+
 function CMD.user_ready(account, is_ready)
     return room_mgr:user_ready(room_id, account, is_ready)
 end

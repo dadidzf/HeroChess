@@ -15,6 +15,7 @@ function M:auth(fd, msg)
     else
         sock_mgr:auth_fd(fd)
         skynet.send("base_app_mgr", "lua", "bind_account_2_baseapp", msg.account, skynet.self())
+        skynet.send("room_mgr", "lua", "on_user_login", {base_app = skynet.self(), account = player:get_account()})
     end
 
     local obj = player.create(fd, msg.account)

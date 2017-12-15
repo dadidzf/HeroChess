@@ -14,6 +14,25 @@ function CMD.start(conf)
     player_mgr:init()
     login_mgr:init()
     msg_handler.init()
+
+    sock_mgr:register_socket_close_callback(function (fd)
+        local player = player_mgr:get_by_fd(fd)
+        assert(player)
+
+        skynet.send("base_app_mgr", "lua", "bind_account_2_baseapp", player.account, nil)
+        skynet.send("room_mgr", "lua", "on_user_offline", player.account)
+        player_mgr:remove(player)
+        print("remove player -- ", player.account)
+    end)
+end
+
+function CMD.update_golds(account, golds)
+    local player = player_mgr:get_by_account(account)
+    if player then
+        player:update_golds(golds)
+    else
+        db:update_player(account, {golds = golds})
+    end
 end
 
 function CMD.get_clients()

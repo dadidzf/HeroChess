@@ -1,25 +1,25 @@
 local db = require "db"
 local sock_mgr = require "sock_mgr"
 
-local M = {}
+local player = {}
 
-M.__index = M
+player.__index = player
 
-function M.create(...)
+function player.create(...)
     local o = {}
-    setmetatable(o, M)
+    setmetatable(o, player)
 
-    M.init(o, ...)
+    player.init(o, ...)
     return o
 end
 
-function M:init(fd, account)
+function player:init(fd, account)
     self.fd = fd
     self.account = account
     self.status = "load from db"
 end
 
-function M:load_from_db()
+function player:load_from_db()
     local obj = db:load_player(self.account)
     if obj then
         self._db = obj
@@ -28,10 +28,10 @@ function M:load_from_db()
     end
 end
 
-function M:_create_db()
+function player:_create_db()
     local obj = {
         account = self.account,
-        nick_name = "Hero"..os.time(),
+        nick_name = self.nick_name,
         exp = 0,
         golds = 0
     }
@@ -39,7 +39,7 @@ function M:_create_db()
     self._db = obj
 end
 
-function M:pack()
+function player:pack()
     return {
         account = self.account,
         nick_name = self._db.nick_name,
@@ -48,12 +48,21 @@ function M:pack()
     }
 end
 
-function M:sendto_client(proto_name, msg)
+function player:get_info()
+    return self:pack() 
+end
+
+function player:update_golds(golds)
+    self._db.golds = golds
+    db:update_player(account, {golds = golds})
+end
+
+function player:sendto_client(proto_name, msg)
     sock_mgr:send(self.fd, proto_name, msg)
 end
 
-function M:get_account()
+function player:get_account()
     return self.account
 end
 
-return M
+return player

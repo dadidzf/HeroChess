@@ -4,61 +4,60 @@ local utils = require "utils"
 local packer = require "packer"
 local msg_define = require "msg_define"
 
-local M = {
+local sock_mgr = {
     dispatch_tbl = {},
     authed_fd = {},
     clients = 0
 }
 
-function M:start(conf)
+function sock_mgr:start(conf)
     self.gate = skynet.newservice("gate")
     skynet.call(self.gate, "lua", "open", conf)
 
     skynet.error("login service listen on port ", conf.port)
 end
 
-function M:inc_clients()
+function sock_mgr:inc_clients()
     self.clients = self.clients + 1
 end
 
-function M:dec_clients()
+function sock_mgr:dec_clients()
     if self.clients > 0 then
         self.clients = self.clients - 1
     end
 end
 
-function M:get_clients()
+function sock_mgr:get_clients()
     return self.clients
 end
 
-function M:auth_fd(fd)
+function sock_mgr:auth_fd(fd)
     self.authed_fd[fd] = true
 end
 
 -------------------处理socket消息开始--------------------
-function M:open(fd, addr)
+function sock_mgr:open(fd, addr)
     skynet.error("New client from : " .. addr)
     skynet.call(self.gate, "lua", "accept", fd)
 
     self:inc_clients()
 end
 
-function M:close(fd)
+function sock_mgr:close(fd)
     self:close_conn(fd)
     skynet.error("socket close "..fd)
 end
 
-function M:error(fd, msg)
+function sock_mgr:error(fd, msg)
     self:close_conn(fd)
     skynet.error("socket error "..fd.." msg "..msg)
 end
 
-function M:warning(fd, size)
-    self:close_conn(fd)
+function sock_mgr:warning(fd, size)
     skynet.error(string.format("%dK bytes havn't send out in fd=%d", size, fd))
 end
 
-function M:data(fd, msg)
+function sock_mgr:data(fd, msg)
     skynet.error(string.format("recv socket data fd = %d, len = %d ", fd, #msg))
 
     local proto_id, params = string.unpack(">Hs2", msg)
@@ -73,19 +72,27 @@ function M:data(fd, msg)
     end
 end
 
-function M:close_conn(fd)
+function sock_mgr:close_conn(fd)
+    if self.authed_fd[fd] and self.socket_close_callback then
+        self.socket_close_callback(fd)
+    end
+
     self.authed_fd[fd] = nil
     self:dec_clients()
+end
+
+function sock_mgr:register_socket_close_callback(callback)
+    self.socket_close_callback = callback
 end
 
 -------------------处理socket消息结束--------------------
 
 -------------------网络消息回调函数开始------------------
-function M:register_callback(name, func)
+function sock_mgr:register_callback(name, func)
     self.dispatch_tbl[name] = func
 end
 
-function M:dispatch(fd, proto_id, proto_name, params)
+function sock_mgr:dispatch(fd, proto_id, proto_name, params)
     params = utils.str_2_table(params)
     local func = self.dispatch_tbl[proto_name]
     if not func then
@@ -101,7 +108,7 @@ function M:dispatch(fd, proto_id, proto_name, params)
     end
 end
 
-function M:send(fd, proto_name, msg)
+function sock_mgr:send(fd, proto_name, msg)
     local proto_id = msg_define.nameToId(proto_name)
     local str = utils.table_2_str(msg)
     skynet.error("send msg:"..proto_name)
@@ -109,4 +116,4 @@ function M:send(fd, proto_name, msg)
 end
 -------------------网络消息回调函数结束------------------
 
-return M
+return sock_mgr

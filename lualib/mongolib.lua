@@ -33,4 +33,8 @@ function M:insert(coll_name, obj)
     self.db[coll_name]:insert(obj)
 end
 
+function M:update(coll_name, obj)
+    self.db[coll_name]:findAndModify(obj)
+end
+
 return M

@@ -27,4 +27,8 @@ function M:save_player(obj)
     self.mongo:insert("player", obj)
 end
 
+function M:update_player(account, content)
+    self.mongo:update("player", {query = {account = account}, update = {["$set"] = content}})
+end
+
 return M

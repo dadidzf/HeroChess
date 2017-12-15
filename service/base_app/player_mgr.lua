@@ -20,6 +20,7 @@ end
 
 function player_mgr:remove(obj)
     self.player_tbl[obj.account] = nil
+    self.account_2_game[obj.account] = nil
     self.fd_2_player[obj.fd] = nil 
 end
 

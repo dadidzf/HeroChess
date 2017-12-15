@@ -14,10 +14,10 @@ end
 -- 为玩家分配一个baseapp
 function CMD.get_base_app_addr()
     for addr, info in pairs(base_app_mgr:get_base_app_tbl()) do
-        local ret = skynet.call(addr, "lua", "get_clients")
-        skynet.error(string.format("Current client counts of port %d is %d", info.port, ret.clients))
+        local clients = skynet.call(addr, "lua", "get_clients")
+        skynet.error(string.format("Current client counts of port %d is %d", info.port, clients))
 
-        if ret.clients < 1000 then
+        if clients < 1000 then
             return {ip = "192.168.18.107", port = info.port, token = "token"}
         end
     end
