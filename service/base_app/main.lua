@@ -22,7 +22,6 @@ function CMD.start(conf)
         skynet.send("base_app_mgr", "lua", "bind_account_2_baseapp", player.account, nil)
         skynet.send("room_mgr", "lua", "on_user_offline", player.account)
         player_mgr:remove(player)
-        print("remove player -- ", player.account)
     end)
 end
 
@@ -59,7 +58,6 @@ skynet.start(function()
             return
         end
 
-        print(session, cmd, subcmd)
         local f = CMD[cmd]
         assert(f, "can't find dispatch handler cmd = "..tostring(cmd))
 

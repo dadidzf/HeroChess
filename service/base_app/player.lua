@@ -54,7 +54,12 @@ end
 
 function player:update_golds(golds)
     self._db.golds = golds
-    db:update_player(account, {golds = golds})
+    db:update_player(self.account, {golds = golds})
+end
+
+function player:update_exp(exp)
+    self._db.exp = exp
+    db:update_player(self.account, {exp = exp})
 end
 
 function player:sendto_client(proto_name, msg)

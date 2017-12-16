@@ -29,6 +29,15 @@ function CMD.get_total_clients()
     return base_app_mgr:get_total_clients()
 end
 
+function CMD.update_golds(account, golds)
+    local addr = base_app_mgr:get_baseapp_by_account(account)
+    if not addr then
+        addr = next(base_app_mgr:get_base_app_tbl())
+    end
+
+    skynet.send(addr, "lua", "update_golds", account, golds)
+end
+
 function CMD.bind_account_2_baseapp(account, base_app_addr)
     base_app_mgr:bind_account_2_baseapp(account, base_app_addr)
 end

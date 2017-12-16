@@ -21,7 +21,7 @@ function base_app_mgr:create_base_apps()
 end
 
 function base_app_mgr:start_base_apps()
-    for _,v in pairs(self.base_app_tbl) do
+    for _, v in pairs(self.base_app_tbl) do
         skynet.call(v.addr, "lua", "start", {
             port = v.port,
             maxclient = 1000,
