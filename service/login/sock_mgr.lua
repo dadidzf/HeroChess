@@ -5,9 +5,9 @@ local packer = require "packer"
 local account_mgr = require "account_mgr"
 local msg_define = require "msg_define"
 
-local M = {}
+local sock_mgr = {}
 
-function M:start(conf)
+function sock_mgr:start(conf)
     self.gate = skynet.newservice("gate")
 
     skynet.call(self.gate, "lua", "open", conf)
@@ -18,25 +18,25 @@ function M:start(conf)
 end
 
 -------------------处理socket消息开始--------------------
-function M:open(fd, addr)
+function sock_mgr:open(fd, addr)
     skynet.error("New client from : " .. addr)
     skynet.call(self.gate, "lua", "accept", fd)
 end
 
-function M:close(fd)
+function sock_mgr:close(fd)
     skynet.error("socket close "..fd)
 end
 
-function M:error(fd, msg)
+function sock_mgr:error(fd, msg)
     skynet.error("socket error "..fd)
 end
 
-function M:warning(fd, size)
+function sock_mgr:warning(fd, size)
     -- size K bytes havn't send out in fd
     skynet.error("socket warning "..fd)
 end
 
-function M:data(fd, msg)
+function sock_mgr:data(fd, msg)
     skynet.error(string.format("socket data fd = %d, len = %d ", fd, #msg))
     local proto_id, params = string.unpack(">Hs2", msg)
 
@@ -50,14 +50,15 @@ end
 -------------------处理socket消息结束--------------------
 
 -------------------网络消息回调函数开始------------------
-function M:register_callback()
+function sock_mgr:register_callback()
     self.dispatch_tbl = {
         ["login.login"] = self.login,
-        ["login.register"] = self.register
+        ["login.register"] = self.register,
+        ["login.get_account"] = self.get_account
     }
 end
 
-function M:dispatch(fd, proto_id, proto_name, params)
+function sock_mgr:dispatch(fd, proto_id, proto_name, params)
     local f = self.dispatch_tbl[proto_name]
     if not f then
         skynet.error("can't find socket callback "..proto_id)
@@ -69,11 +70,13 @@ function M:dispatch(fd, proto_id, proto_name, params)
         skynet.error("ret msg:"..utils.table_2_str(ret_msg))
         socket.write(fd, packer.pack(proto_id, ret_msg))
 
-        skynet.call(self.gate, "lua", "kick", fd)
+        if ret_msg.close_socket then
+            skynet.call(self.gate, "lua", "kick", fd)
+        end
     end
 end
 
-function M:login(fd, msg)
+function sock_mgr:login(fd, msg)
     skynet.error(string.format("verfy account:%s passwd:%s ", msg.account, msg.passwd))
     local success, errmsg = account_mgr:verify(msg.account, msg.passwd)
     if not success then
@@ -81,24 +84,31 @@ function M:login(fd, msg)
     end
 
     local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = msg.account})
+    ret.close_socket = true
 
     return ret
 end
 
-function M:register(fd, msg)
-    if account_mgr:get_by_account(msg.account) then
-        return {errmsg = "account exist"}
-    end
+function sock_mgr:register(fd, msg)
+    local success, account = account_mgr:register(msg.account, msg.passwd)
 
-    local success = account_mgr:register(msg.account, msg.passwd)
-
-    local ret = {}
     if success then
-        ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = msg.account})
+        local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = account})
+        ret.close_socket = true
+        return ret
+    else
+        return {errmsg = msg}
     end
+end
 
-    return ret
+function sock_mgr:get_account()
+    local account = account_mgr:gen_account()
+    if account then
+        return {account = account}
+    else
+        return {errmsg = "no more account"}
+    end
 end
 -------------------网络消息回调函数结束------------------
 
-return M
+return sock_mgr

@@ -3,6 +3,7 @@ local MsgDefine = {}
 local _idTbl = {
     -- 登陆协议
     "login.login",
+    "login.get_account",
     "login.register",
     "login.login_baseapp",
 
