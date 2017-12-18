@@ -1,5 +1,5 @@
 local player_mgr = {}
- function player_mgr:init()
+function player_mgr:init()
     self.player_tbl = {}
     self.fd_2_player = {}
     self.account_2_game = {}

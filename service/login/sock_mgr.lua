@@ -90,14 +90,14 @@ function sock_mgr:login(fd, msg)
 end
 
 function sock_mgr:register(fd, msg)
-    local success, account = account_mgr:register(msg.account, msg.passwd)
+    local success, info = account_mgr:register(msg.account, msg.passwd)
 
     if success then
-        local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = account})
+        local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = info})
         ret.close_socket = true
         return ret
     else
-        return {errmsg = msg}
+        return {errmsg = info}
     end
 end
 

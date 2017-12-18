@@ -28,19 +28,25 @@ function account_mgr:init()
     self:load_all()
 end
 
-function account_mgr:gen_account()
-    self:recycle_accounts()
-
+function account_mgr:get_new_account()
     local len = #self.rest_account_tbl
     local index = math.random(1, len)
     local new_account = self.rest_account_tbl[index]
-    self.accounts_to_be_registered[new_account] = true
-    self.accounts_to_be_registered_count = self.accounts_to_be_registered_count + 1
     self.rest_account_tbl[index] = self.rest_account_tbl[len]
     self.rest_account_tbl[len] = nil
 
+    return new_account
+end
+
+function account_mgr:gen_account()
+    self:recycle_accounts()
+
+    local new_account = self:get_new_account()
+    self.accounts_to_be_registered[new_account] = true
+    self.accounts_to_be_registered_count = self.accounts_to_be_registered_count + 1
+
     print("account_mgr:gen_account -- rest ", len)
-    return tostring(new_account)
+    return new_account 
 end
 
 function account_mgr:recycle_accounts()
@@ -68,7 +74,7 @@ function account_mgr:load_all()
 
     for i = _account_min, _account_max do
         -- account should be string, but we use number here to save the memory
-        if not self.account_tbl[tostring(i)] then
+        if not self.account_tbl[i] then
             table.insert(self.rest_account_tbl, i)
         end
     end
@@ -121,12 +127,11 @@ function account_mgr:register(account, passwd)
 end
 
 function account_mgr:check_register(account, passwd)
-    local num_account = tonumber(account)
     local num_passwd = tonumber(passwd)
 
-    if type(account) == "string" and type(passwd) == "string" and
-        num_account and num_passwd and num_account >= _account_min and 
-        num_account <= _account_max and #passwd == 6 then
+    if type(account) == "number" and type(passwd) == "string" and
+        num_passwd and account >= _account_min and 
+        account <= _account_max and #passwd == 6 then
         return true
     else
         return false
