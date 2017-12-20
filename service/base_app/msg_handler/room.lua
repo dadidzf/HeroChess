@@ -18,12 +18,12 @@ end
 
 function room.user_ready(fd, request)
     local player = player_mgr:get_by_fd(fd)
-    skynet.call("room_mgr", "lua", "user_ready", player.account, request.is_ready)
+    skynet.send("room_mgr", "lua", "user_ready", player.account, request.is_ready)
 end
 
 function room.dissolve_room(fd, request)
     local player = player_mgr:get_by_fd(fd)
-    skynet.call("room_mgr", "lua", "dissolve_room", player.account, request.is_dissolve)
+    skynet.send("room_mgr", "lua", "dissolve_room", player.account, request.is_dissolve)
 end
 
 return room

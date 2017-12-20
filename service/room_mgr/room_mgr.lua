@@ -46,9 +46,7 @@ function room_mgr:join(room_id, player_info)
             return {errmsg = "room is full"}
         else
             self.player_2_room[player_info.account] = room_id
-            room:add(player_info)
-            room:send_other_client(#self.player_list, "room.user_enter", {account = player_info.account})
-            return room:pack()
+            return room:join()
         end
     else
         return {errmsg = "room not exist"}
@@ -84,7 +82,6 @@ function room_mgr:on_user_login(player_info)
     local room = self.player_2_room[player_info.account]
     if room then
         room:on_user_login(player_info)
-        skynet.send(player_info.base_app, "lua", "bind_account_2_game", player.account, {game = room:get_game(), id = room_id})
     end
 end
 

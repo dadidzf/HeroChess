@@ -10,11 +10,14 @@ local _idTbl = {
     -- 系统消息
     "system.update_exp",
     "system.update_golds",
+    "system.game_reconnect",
 
     -- 房间消息
     "room.create_room",
     "room.join_room",
+    "room.room_info",
     "room.user_enter",
+    "room.user_exit",
     "room.user_ready",
     "room.dissolve_room",
 
