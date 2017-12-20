@@ -1,5 +1,4 @@
 local skynet = require "skynet"
-local player_mgr = require "player_mgr"
 local match = require "match"
 local match_mgr = require "match_mgr"
 

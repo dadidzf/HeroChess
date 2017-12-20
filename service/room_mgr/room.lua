@@ -78,7 +78,13 @@ function room:dissolve_room(account, is_dissolve)
         if next(self.dissolve_list) then
             if is_dissolve then
                 table.insert(self.dissolve_list, account)
-                if #self.player_list == #self.dissolve_list then
+                local will_dissolve = true 
+                for account, _ in ipairs(self.online_list) do
+                    if not self.dissolve_list[account] then
+                        will_dissolve = false
+                    end
+                end
+                if will_dissolve then
                     self:send_all_client("room.dissolve_room", {dissolve = true})
                     self.dissolve_list = {}
                     skynet.send(self.game.addr, "lua", "dissolve_game", {room_id = self.room_id})
@@ -89,7 +95,7 @@ function room:dissolve_room(account, is_dissolve)
             end
         else
             if is_dissolve then
-                table.insert(self.dissolve_list, account)
+                self.dissolve_list[account] = true
                 self:send_all_client("room.dissolve_room", self.dissolve_list)
             end
         end
@@ -127,7 +133,6 @@ function room:on_user_offline(account)
 
     if self.game then
         skynet.send(self.game.addr, "lua", "on_user_offline", {room_id = self.room_id, account = account})
-        self.dissolve_list[account] = true
     else
         local index_to_remove
         for index, player in ipairs(self.player_list) do
@@ -149,7 +154,7 @@ end
 
 function room:start()
     self.game = skynet.call("game_mgr", "lua", "get_game", self.game_id)
-    skynet.send(game.addr, "lua", "create_game", self:pack())
+    skynet.send(game.addr, "lua", "create_game", {room_id = self.room_id, player_list = self.player_list})
 end
 
 function room:pack()
