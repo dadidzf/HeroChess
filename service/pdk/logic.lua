@@ -28,8 +28,6 @@ logic.type = {
     t_1n = "t_1n",      -- 顺子
     t_2  = "t_2",       -- 对
     t_2n = "t_2n",      -- 连对
-    t_3last  = "t_3last",       -- 最后可出的三个或三带一
-    t_3nlast = "t_3nlast",      -- 最后可出的三个飞机
     t_32 = "t_32",      -- 三带2
     t_32n= "t_32n",     -- 三带二飞机
     t_4  = "t_4",       -- 炸弹
@@ -38,6 +36,20 @@ logic.type = {
     -- t_43 = "t_43",      -- 四带三
     -- t_king = "t_king",  -- 王炸
 }
+
+function logic.shuffle(card_counts)
+    local cards = logic.clone(card_pool[card_counts])
+    math.randomseed(os.time())
+
+    for n = card_counts, 1, -1 do
+        local index = math.random(n)
+        local temp = cards[n]
+        cards[n] = cards[index]
+        cards[index] = temp
+    end
+
+    return cards
+end
 
 function logic.get_card_index(card)
     local c = card & 0x0f
@@ -72,22 +84,7 @@ function logic.clone(object)
     return _copy(object)
 end
 
--- 获取牌型
-function logic.get_type(out_cards)
-    local counts, cards = logic.analysic_card(out_cards)
-
-    if counts[4] > 0 then
-        return logic.get_type4(counts, cards)
-    elseif counts[3] > 0 then
-        return logic.get_type3(counts, cards)
-    elseif counts[2] > 0 then
-        return logic.get_type2(counts, cards)
-    elseif counts[1] > 0 then
-        return logic.get_type1(counts, cards)
-    end
-end
-
-function logic.analysic_card(cards)
+function logic.analysic_card(out_cards)
     local tmp_cards = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
     for _, c in ipairs(out_cards) do
         local index = logic.get_card_index(c)
@@ -107,7 +104,22 @@ function logic.analysic_card(cards)
     return counts, cards
 end
 
-function logic.get_type4(counts, cards)
+-- 获取牌型
+function logic.get_type(out_cards, is_last)
+    local counts, cards = logic.analysic_card(out_cards)
+
+    if counts[4] > 0 then
+        return logic.get_type4(counts, cards, is_last)
+    elseif counts[3] > 0 then
+        return logic.get_type3(counts, cards, is_last)
+    elseif counts[2] > 0 then
+        return logic.get_type2(counts, cards)
+    elseif counts[1] > 0 then
+        return logic.get_type1(counts, cards)
+    end
+end
+
+function logic.get_type4(counts, cards, is_last)
     if counts[4] == 1 then
         local sum = counts[3] + counts[2] + counts[1]
         if sum == 0 then
@@ -131,22 +143,23 @@ function logic.get_type4(counts, cards)
         return a < b
     end)
 
-    return logic.get_type3(counts_temp, cards_temp)
+    return logic.get_type3(counts_temp, cards_temp, is_last)
 end
 
-function logic.get_type3(counts, cards)
+function logic.get_type3(counts, cards, is_last)
     assert(counts[4] == 0, "if run here, cards[4] should have been seperated to cards[1] and cards[3] ! \
         and counts[4] should be 0 !")
 
     if counts[3] == 1 then
         local sum = counts[1] + 2*counts[2]
         local card = cards[3][1]
-        if sum > 2 then
-            return
-        elseif sum == 2 then
+
+        if sum == 2 then
             return {t = logic.type.t_32, card = card}
         else
-            return {t = logic.type.t_3last, card = card}
+            if sum < 2 and is_last then
+                return {t = logic.type.t_32, card = card}
+            end
         end
     else
         local max_continue_tb = logic.get_max_continue(cards[3])
@@ -155,14 +168,10 @@ function logic.get_type3(counts, cards)
 
         local sum = counts[1] + counts[2]*2 + (counts[3] - n)*3
         if sum == n*2 then
-            if card + n - 1 >= logic.get_card_index(2) then
-                return
-            else 
-                return {t = logic.type.t_32n, card = card, n = n}
-            end
+            return {t = logic.type.t_32n, card = card, n = n}
         else
-            if sum < n*2 then
-                return {t = logic.type.t_3nlast, card = card, n = n}
+            if sum < n*2 and is_last then
+                return {t = logic.type.t_32n, card = card, n = n}
             end
         end
     end
@@ -230,6 +239,10 @@ function logic.get_all_continue(cards)
     local last
     local tmp
     for _, c in ipairs(cards) do
+        if c >= logic.get_card_index(2) then
+            break
+        end
+
         if last and last + 1 ~= c then
             table.insert(t, tmp)
             tmp = nil
@@ -248,7 +261,7 @@ function logic.get_all_continue(cards)
 end
 
 function logic.get_max_continue(cards)
-    local t = logic.get_max_continue(cards) 
+    local t = logic.get_all_continue(cards) 
 
     local m
     for _, v in ipairs(t) do
@@ -284,7 +297,7 @@ function logic.is_big(info1, info2)
 end
 
 -- 仅用于服务端判断是否要的起
-function logic.is_bigger_cards_exist(out_info, all_cards, is_last)
+function logic.is_bigger_cards_exist(out_info, all_cards)
     local counts, cards = logic.analysic_card(all_cards)
     local out_card = out_info.card
     local out_n = out_info.n
@@ -301,9 +314,9 @@ function logic.is_bigger_cards_exist(out_info, all_cards, is_last)
     elseif out_t == logic.type.t_2n then
         return logic.is_bigger_t_2n_exist(out_card, out_n, counts, cards)
     elseif out_t == logic.type.t_32 then
-        return logic.is_bigger_t_32_exist(out_card, counts, cards, is_last)
+        return logic.is_bigger_t_32_exist(out_card, counts, cards)
     elseif out_t == logic.type.t_32n then
-        return logic.is_bigger_t_32n_exist(out_card, out_n, counts, cards, is_last)
+        return logic.is_bigger_t_32n_exist(out_card, out_n, counts, cards)
     else
         assert(false, "can not be here !")
     end
@@ -311,7 +324,7 @@ end
 
 function logic.is_bigger_t_4_exist(out_card, counts, cards)
     local count4 = counts[4]
-    if count4 > 0 and cards[count4] > out_card then
+    if count4 > 0 and cards[4][count4] > out_card then
         return true
     else
         return false
@@ -416,16 +429,14 @@ function logic.is_bigger_t_2n_exist(out_card, out_n, counts, cards)
     return false
 end
 
-function logic.is_bigger_t_32_exist(out_card, counts, cards, is_last)
+function logic.is_bigger_t_32_exist(out_card, counts, cards)
     if counts[4] > 0 then
         return true
     end
 
     local count3 = counts[3]
     if cards[3][count3] > out_card then
-        if is_last then
-            return true
-        elseif counts[2]*2 + counts[1] == 2 then
+        if counts[2]*2 + counts[1] <= 2 then
             return true
         else
             return false
@@ -435,17 +446,13 @@ function logic.is_bigger_t_32_exist(out_card, counts, cards, is_last)
     end
 end
 
-function logic.is_bigger_t_32n_exist(out_card, out_n, counts, cards, is_last)
+function logic.is_bigger_t_32n_exist(out_card, out_n, counts, cards)
     if counts[4] > 0 then
         return true
     end
 
     local t = logic.get_all_continue(cards[3])
     local out_max = out_card + out_n - 1
-
-    if (not is_last) and (counts[2]*2 + counts[1] < out_n*2) then
-        return false
-    end
 
     for _, continue in ipairs(t) do
         local len = #continue
@@ -458,7 +465,6 @@ function logic.is_bigger_t_32n_exist(out_card, out_n, counts, cards, is_last)
 
     return false
 end
-
 
 -- function logic.get_bigger_cards(out_info, all_cards)
 --     if out_info.t == logic.type.t_4 then
