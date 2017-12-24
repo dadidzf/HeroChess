@@ -440,7 +440,6 @@ function logic.is_bigger_t_32n_exist(out_card, out_n, counts, cards, is_last)
         return true
     end
 
-
     local t = logic.get_all_continue(cards[3])
     local out_max = out_card + out_n - 1
 

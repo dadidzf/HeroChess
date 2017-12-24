@@ -1,6 +1,4 @@
-local mjlib = require "base.mjlib"
-local utils = require "utils"
-
+local game = require("game")
 local match = {}
 
 match.__index = match
@@ -15,89 +13,93 @@ end
 function match:init(info)
     self.id = info.room_id
     self.player_list = info.player_list
+    self.total_score_list = {}
+    self.total_rounds = info.rounds
+    self.cur_rounds = 0
 
-    self.cards = {}
-
-    self.active_seat = 1
-    self.players = {}
-    for i=1,4 do
-        self.players[i] = self:init_player(i)
-    end
-
-    utils.print(self.players)
+    self.dispatch_tbl = {}
+    self:init_account_2_player_list()
+    self:init_account_2_seat_list()
+    self:create_game()
 end
 
-function match:deal_msg(proto_name, content)
-end
-
-function match:init_player(i)
-    local info = {
-        seat = i,
-        stand_cards = {},
-        waves = {},
-        active = false,
-    }
-    return info
-end
-
-function match:begin()
-    -- 洗牌
-    self.cards = mjlib.create(true)
-    self.cards_num = #self.cards
-    -- 每人发13张牌
-    for i=1,4 do
-        self:dealt_card(self.players[i].stand_cards, 13)
-    end
-    self.status = "dealt"
-
-    for i=1,4 do
-        local msg = {
-            cards = self.players[i].cards
-        }
-        self.room:send_client(i, "match.dealt", msg)
+function match:init_account_2_player_list()
+    self.account_2_player_list = {}
+    for _, player in ipairs(self.player_list) do
+        self.account_2_player_list[player.account] = player
     end
 end
 
-function match:dealt_card(tbl, num)
-    self.cards_num = self.cards_num - num
-    for _=1,34 do
-        table.insert(tbl, 0)
-    end
-
-    for i=1,num do
-        local index = self.cards[self.cards_num + i]
-        tbl[index] = tbl[index] + 1
+function match:init_account_2_seat_list()
+    self.account_2_seat_list = {}
+    for seat, player in ipairs(self.player_list) do
+        self.account_2_seat_list[player.account] = seat
     end
 end
 
-function match:get_card()
-    local player = self.players[self.active_seat]
-
-    local card = self.cards[self.card_num]
-    player.stand_card[card] = player.stand_card[card] + 1
-    self.card_num = self.card_num - 1
+function match:deal_msg(account, proto_name, content)
+    local seat = self.account_2_seat_list[account]
+    local func = self.dispatch_tbl[proto_name]
+    if func then
+        return func(seat, content)
+    else
+        if self.game then
+            return self.game:deal_msg(seat, proto_name, content)
+        end
+    end
 end
 
-function match:out_card(card)
-    local player = self.players[self.active_seat]
-    player.stand_card[card] = player.stand_card[card] - 1
-    self.status = "out_card"
+function match:create_game()
+    self.cur_rounds = self.cur_rounds + 1    
+    self.game = game.new(#self.player_list, 
+        handler(self, self.send_client),
+        handler(self, self.send_all_client),
+        handler(self, self.send_other_client)
+        )
+
+    self.game:begin()
+end
+
+function match:on_outside_force_end()
+    self:send_all_client("pdk.game_end", self.total_score_list)
+end
+
+function match:on_round_over(score_list)
+    for seat, score in ipairs(score_list) do
+        self.total_score_list[seat] = self.total_score_list[seat] + score
+    end
+
+    if self.cur_rounds >= self.total_rounds then
+        skynet.send("room_mgr", "lua", "on_room_closed", self.id)
+        self:send_all_client("pdk.match_end", self.total_score_list)
+    else
+        self:send_all_client("pdk.game_end", {score_list, self.total_score_list}) 
+        self.next_ready_list = {}
+    end
 end
 
 function match:on_user_login(player_info)
+    local player = self.account_2_player_list[player_info.account]
+    player.base_app = player_info.base_app
 end
 
 function match:on_user_offline(account)
+    local player = self.account_2_player_list[account]
+    player.base_app = nil
 end
 
 function match:send_client(seat, proto_name, msg)
     local player = self.player_list[seat]
-    skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+    if player.base_app then
+        skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+    end
 end
 
 function match:send_all_client(proto_name, msg)
     for _, player in ipairs(self.player_list) do
-        skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+        if player.base_app then
+            skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+        end
     end
 end
 
@@ -105,7 +107,9 @@ function match:send_other_client(myseat, proto_name, msg)
     local me = self.player_list[myseat]
     for id, player in ipairs(self.player_list) do
         if id ~= myseat then
-            skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+            if player.base_app then
+                skynet.send(player.base_app, "lua", "sendto_client", player.account, proto_name, msg)
+            end
         end
     end
 end

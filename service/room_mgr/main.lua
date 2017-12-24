@@ -38,6 +38,10 @@ function CMD.dissolve_room(account, is_dissolve)
     return room_mgr:dissolve_room(account, is_dissolve)
 end
 
+function CMD.close_room(room_id)
+    return room_mgr:on_room_closed(room_id)
+end
+
 local function dispatch(_, session, cmd, ...)
     local f = CMD[cmd]
     assert(f, "room_mgr接收到非法lua消息: ".. tostring(cmd))

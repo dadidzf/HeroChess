@@ -1,3 +1,4 @@
+require "my_init"
 local skynet = require "skynet"
 local match = require "match"
 local match_mgr = require "match_mgr"
@@ -12,26 +13,26 @@ function CMD.create_game(info)
 end
 
 function CMD.dissolve_game(room_info)
+    local match = match_mgr:get(room_info.room_id)
+    match:on_outside_force_end()
     match_mgr:remove_by_id(room_info.room_id)
 end
 
 function CMD.on_user_offline(info)
     local id = info.room_id
-    local account = info.account
     local match = match_mgr:get(id)
-    match:on_user_offline(account)
+    match:on_user_offline(info.account)
 end
 
 function CMD.on_user_login(info)
     local id = info.room_id
-    local player_info = info.player_info
     local match = match_mgr:get(id)
-    match:on_user_login(player_info)
+    match:on_user_login(info.player_info)
 end
 
-function CMD.deal_game_msg(msg)
+function CMD.deal_game_msg(account, msg)
     local match = match_mgr:get(msg.id)
-    return match.deal_msg(msg.proto_name, msg.content)
+    return match.deal_msg(account, msg.proto_name, msg.content)
 end
 
 skynet.start(function ()

@@ -25,6 +25,8 @@ local _idTbl = {
     "game.game_start",
 
     -- 跑的快 pdk
+    "pdk.match_end",
+    "pdk.game_end",
 
     "game.game_end",
 }
