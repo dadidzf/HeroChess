@@ -52,7 +52,7 @@ end
 
 function match:create_game()
     self.cur_rounds = self.cur_rounds + 1    
-    self.game = game:new(#self.player_list, self.room_conf
+    self.game = game:new(#self.player_list, self.room_conf,
         handler(self, self.send_client),
         handler(self, self.send_all_client),
         handler(self, self.send_other_client)
@@ -70,12 +70,14 @@ function match:on_round_over(over_info)
     local score_list = {}
     for seat, cards in ipairs(cards_list) do
         if winner ~= seat then
-        local score = #cards
-        if score == 1 then
-            score = 0 
+            local score = #cards
+            if score == 1 then
+                score = 0 
+            end
+            score_list[seat] = score
+        else
+            score_list[winner] = score_list[winner] + score
         end
-        score_list[seat] = score
-        score_list[winner] = score_list[winner] + score
     end
 
     for seat, score in ipairs(score_list) do

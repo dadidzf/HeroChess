@@ -67,7 +67,7 @@ end
 
 function room:user_ready(account, is_ready)
     self.ready_list[account] = is_ready
-    self:send_all_client("room.user_ready", {account] = account,  is_ready = is_ready})
+    self:send_all_client("room.user_ready", {account = account,  is_ready = is_ready})
 
     if self:check_ready() then
         room:start()

@@ -6,7 +6,7 @@ local room = {}
 function room.create_room(fd, request)
     local player = player_mgr:get_by_fd(fd)
     local id = skynet.call("room_mgr", "lua", "create_room", request.game_id, 
-        {base_app = skynet.self(), account = player:get_account()}, room_conf = request.room_conf)
+        {base_app = skynet.self(), account = player:get_account()}, request.room_conf)
     return {room_id = id}
 end
 

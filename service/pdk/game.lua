@@ -4,8 +4,8 @@ local game = {}
 game.__index = game
 
 local _proto_name_map_func_name = {
-    "pdk.out_card" = "on_out_card",
-    "pdk.pass" = "on_pass"
+    ["pdk.out_card"] = "on_out_card",
+    ["pdk.pass"] = "on_pass"
 }
 
 function game:new(...)
@@ -56,7 +56,7 @@ function game:get_first_seat()
     else
         for seat, seat_cards in ipairs(self.player_hand_cards) do
             for _, card in seat_cards do
-                if card == 0x33 do
+                if card == 0x33 then
                     return seat
                 end
             end
