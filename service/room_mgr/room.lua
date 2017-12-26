@@ -13,9 +13,10 @@ function room.new(...)
     return o
 end
 
-function room:init(room_id, game_id, player_info)
+function room:init(room_id, game_id, player_info, room_conf)
     self.room_id = room_id
     self.game_id = game_id
+    self.room_conf = room_conf
 
     self.owner_account = player_info.account
     self.player_list = {player_info}
@@ -120,7 +121,8 @@ function room:on_user_login(player_info)
 
         self:send_client(player_info.account, "room.room_info", self:pack())
         self:send_other_client("room.user_enter", {account = player_info.account})
-        skynet.send(self.game.addr, "lua", "on_user_login", {room_id = self.room_id, player_info = player_info})
+        skynet.send(self.game.addr, "lua", "on_user_login", 
+            {room_id = self.room_id, player_info = player_info, room_conf = self.room_conf})
     end
 end
 
@@ -154,7 +156,8 @@ end
 
 function room:start()
     self.game = skynet.call("game_mgr", "lua", "get_game", self.game_id)
-    skynet.send(game.addr, "lua", "create_game", {room_id = self.room_id, player_list = self.player_list})
+    skynet.send(game.addr, "lua", "create_game", 
+        {room_id = self.room_id, player_list = self.player_list, room_conf = self.room_conf})
 end
 
 function room:pack()

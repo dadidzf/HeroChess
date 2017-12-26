@@ -38,7 +38,8 @@ logic.type = {
 }
 
 function logic.shuffle(card_counts)
-    local cards = logic.clone(card_pool[card_counts])
+    local cards_in_order = card_pool[card_counts]
+    local cards = logic.clone(cards_in_order)
     math.randomseed(os.time())
 
     for n = card_counts, 1, -1 do
@@ -48,7 +49,12 @@ function logic.shuffle(card_counts)
         cards[index] = temp
     end
 
-    return cards
+    local ret_cards = {{}, {}, {}}
+    for i, card in ipairs(cards) do
+        ret_cards[(i - 1)%card_counts + 1] = card
+    end
+
+    return ret_cards
 end
 
 function logic.get_card_index(card)

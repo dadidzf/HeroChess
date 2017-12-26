@@ -16,9 +16,9 @@ function room_mgr:init()
     end
 end
 
-function room_mgr:create(game_id, player_info)
+function room_mgr:create(game_id, player_info, room_conf)
     local room_id = id_mgr:gen_id(game_id)
-    room = room.new(room_id, game_id, player_info)
+    room = room.new(room_id, game_id, player_info, room_conf)
     self.room_tbl[room_id] = room
     self.player_2_room[player_info.account] = room 
     table.insert(self.game_2_room[game_id], room)

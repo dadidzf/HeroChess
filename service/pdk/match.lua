@@ -12,6 +12,7 @@ end
 
 function match:init(info)
     self.id = info.room_id
+    self.room_conf = info.room_conf
     self.player_list = info.player_list
     self.total_score_list = {}
     self.total_rounds = info.rounds
@@ -51,7 +52,7 @@ end
 
 function match:create_game()
     self.cur_rounds = self.cur_rounds + 1    
-    self.game = game.new(#self.player_list, 
+    self.game = game:new(#self.player_list, self.room_conf
         handler(self, self.send_client),
         handler(self, self.send_all_client),
         handler(self, self.send_other_client)
@@ -64,7 +65,19 @@ function match:on_outside_force_end()
     self:send_all_client("pdk.game_end", self.total_score_list)
 end
 
-function match:on_round_over(score_list)
+function match:on_round_over(over_info)
+    local winner = over_info.cards
+    local score_list = {}
+    for seat, cards in ipairs(cards_list) do
+        if winner ~= seat then
+        local score = #cards
+        if score == 1 then
+            score = 0 
+        end
+        score_list[seat] = score
+        score_list[winner] = score_list[winner] + score
+    end
+
     for seat, score in ipairs(score_list) do
         self.total_score_list[seat] = self.total_score_list[seat] + score
     end

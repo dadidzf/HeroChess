@@ -14,8 +14,8 @@ end
 
 local CMD = {}
 
-function CMD.create_room(game_id, player_info)
-    return room_mgr:create(game_id, player_info)
+function CMD.create_room(game_id, player_info, room_conf)
+    return room_mgr:create(game_id, player_info, room_conf)
 end
 
 function CMD.join_room(room_id, player_info)
