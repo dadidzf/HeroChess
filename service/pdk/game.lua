@@ -8,7 +8,7 @@ local _proto_name_map_func_name = {
     ["pdk.pass"] = "on_pass"
 }
 
-function game:new(...)
+function game.new(...)
     local o = {}
     setmetatable(o, game)
     game.init(o, ...)
@@ -147,6 +147,14 @@ end
 
 function game:pre_seat(seat)
     return (seat + self.player_counts - 2)%self.player_counts + 1
+end
+
+function game:pack()
+    return {
+        cards = self.player_hand_cards,
+        cur_seat = self.cur_seat,
+        previous_cards_record = self.previous_cards_record
+    }
 end
 
 function game:deal_msg(seat, proto_name, content)

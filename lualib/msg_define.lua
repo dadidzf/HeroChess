@@ -28,7 +28,9 @@ local _idTbl = {
     "pdk.send_card",
     "pdk.out_card",
     "pdk.pass",
+    "pdk.game_info",
     "pdk.game_end",
+    "pdk.ready_next",
     "pdk.match_end",
 
     "game.game_end",

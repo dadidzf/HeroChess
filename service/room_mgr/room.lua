@@ -122,7 +122,7 @@ function room:on_user_login(player_info)
         self:send_client(player_info.account, "room.room_info", self:pack())
         self:send_other_client("room.user_enter", {account = player_info.account})
         skynet.send(self.game.addr, "lua", "on_user_login", 
-            {room_id = self.room_id, player_info = player_info, room_conf = self.room_conf})
+            {room_id = self.room_id, player_info = player_info})
     end
 end
 
@@ -163,6 +163,7 @@ end
 function room:pack()
     return {
         room_id = self.room_id,
+        room_conf = self.room_conf
         owner_account = self.owner_account,
         player_list = self.player_list,
         online_list = self.online_list,
