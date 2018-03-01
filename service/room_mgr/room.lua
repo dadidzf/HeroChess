@@ -163,7 +163,7 @@ end
 function room:pack()
     return {
         room_id = self.room_id,
-        room_conf = self.room_conf
+        room_conf = self.room_conf,
         owner_account = self.owner_account,
         player_list = self.player_list,
         online_list = self.online_list,
