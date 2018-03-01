@@ -1,4 +1,6 @@
 local game = require("game")
+local match_mgr = require "match_mgr"
+
 local match = {}
 
 match.__index = match
@@ -67,7 +69,7 @@ function match:create_game()
 end
 
 function match:on_outside_force_end()
-    self:send_all_client("pdk.match_end", {rounds = self.cur_rounds, total = self.total_score_list, force = true})
+    self:on_match_end(true)
 end
 
 function match:on_ready_next(seat, content)
@@ -100,6 +102,12 @@ function match:get_score_list(winner, card_lists)
     end
 end
 
+function match:on_match_end(is_force)
+    skynet.send("room_mgr", "lua", "on_room_closed", self.id)
+    self:send_all_client("pdk.match_end", {rounds = self.cur_rounds, total = self.total_score_list, force = is_force})
+    match_mgr.remove(self)
+end
+
 function match:on_round_over(over_info)
     local score_list = self:get_score_list(over_info.winner, over_info.cards)
     self.last_round_winner = over_info.winner
@@ -111,8 +119,7 @@ function match:on_round_over(over_info)
     self.game = nil
 
     if self.cur_rounds >= self.total_rounds then
-        skynet.send("room_mgr", "lua", "on_room_closed", self.id)
-        self:send_all_client("pdk.match_end", {rounds = self.cur_rounds, total = self.total_score_list})
+        self:on_match_end()
     else
         self:send_all_client("pdk.game_end", {rounds = self.cur_rounds, score = score_list, total = self.total_score_list}) 
         self.next_ready_list = {}
