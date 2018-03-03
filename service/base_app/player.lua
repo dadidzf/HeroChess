@@ -13,9 +13,10 @@ function player.create(...)
     return o
 end
 
-function player:init(fd, account)
+function player:init(fd, account, username)
     self.fd = fd
     self.account = account
+    self.username = username
     self.status = "load from db"
 end
 
@@ -31,7 +32,7 @@ end
 function player:_create_db()
     local obj = {
         account = self.account,
-        nick_name = self.nick_name,
+        nick_name = self.username,
         exp = 0,
         golds = 0
     }

@@ -15,7 +15,7 @@ function login_mgr:auth(fd, msg)
     else
         sock_mgr:auth_fd(fd)
 
-        local player = player.create(fd, msg.account)
+        local player = player.create(fd, msg.account, msg.username)
         player:load_from_db()
         player_mgr:add(player)
         sock_mgr:send(fd, "login.login_baseapp", {info = player:pack()})

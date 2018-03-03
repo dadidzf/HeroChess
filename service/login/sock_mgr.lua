@@ -54,7 +54,6 @@ function sock_mgr:register_callback()
     self.dispatch_tbl = {
         ["login.login"] = self.login,
         ["login.register"] = self.register,
-        ["login.get_account"] = self.get_account
     }
 end
 
@@ -77,38 +76,30 @@ function sock_mgr:dispatch(fd, proto_id, proto_name, params)
 end
 
 function sock_mgr:login(fd, msg)
-    skynet.error(string.format("verfy account:%s passwd:%s ", msg.account, msg.passwd))
-    local success, errmsg = account_mgr:verify(msg.account, msg.passwd)
+    skynet.error(string.format("verfy account:%s passwd:%s ", msg.username, msg.passwd))
+    local success, errmsg = account_mgr:verify(msg.username, msg.passwd)
     if not success then
         return {errmsg = errmsg}
     end
 
-    local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = msg.account})
+    local user = account_mgr:get_by_username(msg.username)
+    local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr")
     ret.close_socket = true
+    ret.user = user
 
     return ret
 end
 
 function sock_mgr:register(fd, msg)
-    local success, info = account_mgr:register(msg.account, msg.passwd)
+    local success, info = account_mgr:register(msg.username, msg.passwd)
 
     if success then
-        local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", {account = info})
-        ret.close_socket = true
-        return ret
+        return {close_socket = false}
     else
         return {errmsg = info}
     end
 end
 
-function sock_mgr:get_account()
-    local account = account_mgr:gen_account()
-    if account then
-        return {account = account}
-    else
-        return {errmsg = "no more account"}
-    end
-end
 -------------------网络消息回调函数结束------------------
 
 return sock_mgr

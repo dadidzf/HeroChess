@@ -18,7 +18,7 @@ function CMD.get_base_app_addr()
         skynet.error(string.format("Current client counts of port %d is %d", info.port, clients))
 
         if clients < 1000 then
-            return {ip = "192.168.18.107", port = info.port, token = "token"}
+            return {ip = "192.168.0.104", port = info.port, token = "token"}
         end
     end
 

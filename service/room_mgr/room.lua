@@ -8,8 +8,8 @@ room.__index = room
 
 function room.new(...)
     local o = {}
-    setmetatable(o, M)
-    M.init(o, ...)
+    setmetatable(o, room)
+    room.init(o, ...)
     return o
 end
 

@@ -23,7 +23,7 @@ function room_mgr:create(game_id, player_info, room_conf)
     self.player_2_room[player_info.account] = room 
     table.insert(self.game_2_room[game_id], room)
 
-    return id
+    return room_id
 end
 
 function room_mgr:get_room_by_owner(account)

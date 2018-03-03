@@ -23,73 +23,55 @@ function account_mgr:init()
     self.mongo = MongoLib.new()
     self.mongo:connect(dbconf)
     self.mongo:use(mongo_db)
-    self.account_tbl = {}
+    self.user_tbl = {}
+    self.rest_account_tbl = {}
 
     self:load_all()
 end
 
-function account_mgr:get_new_account()
-    local len = #self.rest_account_tbl
-    local index = math.random(1, len)
-    local new_account = self.rest_account_tbl[index]
-    self.rest_account_tbl[index] = self.rest_account_tbl[len]
-    self.rest_account_tbl[len] = nil
-
-    return new_account
-end
-
-function account_mgr:gen_account()
-    self:recycle_accounts()
-
-    local new_account = self:get_new_account()
-    self.accounts_to_be_registered[new_account] = true
-    self.accounts_to_be_registered_count = self.accounts_to_be_registered_count + 1
-
-    print("account_mgr:gen_account -- rest ", len)
-    return new_account 
-end
-
-function account_mgr:recycle_accounts()
-    if self.accounts_to_be_registered_count > 100 then
-        for account, _ in pairs(self.accounts_to_be_registered) do
-            table.insert(self.rest_account_tbl, account)
-        end
-
-        self.accounts_to_be_registered = {}
-        self.accounts_to_be_registered_count = 0
-    end
-end
-
 function account_mgr:load_all()
-    self.rest_account_tbl = {}
     local it = self.mongo:find("account", {}, {_id = false})
     if not it then
         return
     end
 
+    local already_used_account_tbl = {}
     while it:hasNext() do
         local obj = it:next()
-        self.account_tbl[obj.account] = obj
+        self.user_tbl[obj.username] = obj
+        already_used_account_tbl[obj.account] = true
     end
 
     for i = _account_min, _account_max do
-        -- account should be string, but we use number here to save the memory
-        if not self.account_tbl[i] then
+        -- user id should be string, but we use number here to save the memory
+        if not already_used_account_tbl[i] then
             table.insert(self.rest_account_tbl, i)
         end
     end
-
-    self.accounts_to_be_registered = {}
-    self.accounts_to_be_registered_count = 0
 end
 
-function account_mgr:get_by_account(account)
-    return self.account_tbl[account]
+function account_mgr:gen_new_account()
+    local len = #self.rest_account_tbl
+    local index = math.random(1, len)
+    local new_id = self.rest_account_tbl[index]
+
+    self.rest_account_tbl[index] = self.rest_account_tbl[len]
+    self.rest_account_tbl[len] = nil
+
+    return new_id
+end
+
+function account_mgr:get_by_username(username)
+    return self.user_tbl[username]
 end
 
 -- 验证账号密码
-function account_mgr:verify(account, passwd)
-    local info = self.account_tbl[account]
+function account_mgr:verify(username, passwd)
+    if type(username) ~= "string" then
+        return false, "username should be string"
+    end
+
+    local info = self.user_tbl[username]
     if not info then
         return false, "account not exist"
     end
@@ -102,36 +84,28 @@ function account_mgr:verify(account, passwd)
 end
 
 -- 注册账号
-function account_mgr:register(account, passwd)
-    if not self:check_register(account, passwd) then
+function account_mgr:register(username, passwd)
+    if not self:check_register_fmt(username, passwd) then
         return false, "format error"
     end
 
-    if self.account_tbl[account] then
-        return false, "account exists"
+    if self.user_tbl[username] then
+        return false, "username exists"
     end
 
-    local num_account = tonumber(account) 
-    if self.accounts_to_be_registered[num_account] then
-        self.accounts_to_be_registered[num_account] = nil
-    else
-        return false, "account error"
-    end
-
-    local info = {account = account, passwd = passwd}
-    self.account_tbl[account] = info
-    self.rest_account_tbl[tonumber(account)] = false
-    self.mongo:insert("account", info)
+    local user_info = {username = username, passwd = passwd, account = self:gen_new_account()}
+    self.user_tbl[username] = user_info 
+    self.mongo:insert("account", user_info)
 
     return true, account
 end
 
-function account_mgr:check_register(account, passwd)
+function account_mgr:check_register_fmt(username, passwd)
     local num_passwd = tonumber(passwd)
 
-    if type(account) == "number" and type(passwd) == "string" and
-        num_passwd and account >= _account_min and 
-        account <= _account_max and #passwd == 6 then
+    if type(username) == "string" and type(passwd) == "string" and
+        string.len(username) >= 6 and string.len(username) <= 8 and string.len(passwd) == 6 and
+        (not string.match(passwd, "%D")) and (not string.match(username, "%W")) then
         return true
     else
         return false
