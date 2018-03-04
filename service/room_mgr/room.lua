@@ -150,8 +150,8 @@ end
 function room:join(player_info)
     table.insert(self.player_list, player_info)
     self.account_2_player[player_info.account] = player_info
-    room:send_other_client(player_info.account, "room.user_enter", {account = player_info.account})
-    return room:pack()
+    self:send_other_client(player_info.account, "room.user_enter", {account = player_info.account})
+    return self:pack()
 end
 
 function room:start()

@@ -45,8 +45,8 @@ function room_mgr:join(room_id, player_info)
         if room:is_full() then
             return {errmsg = "room is full"}
         else
-            self.player_2_room[player_info.account] = room_id
-            return room:join()
+            self.player_2_room[player_info.account] = room
+            return room:join(player_info)
         end
     else
         return {errmsg = "room not exist"}
