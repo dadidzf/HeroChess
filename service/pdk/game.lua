@@ -35,9 +35,9 @@ function game:register_over_callback(game_over_func)
 end
 
 function game:begin(first_seat)
-    local card_counts = self.room_info.card_counts
+    local card_counts = self.room_info.card_counts or 48
     self.player_hand_cards = logic.shuffle(card_counts)
-    assert(card_counts == 15 or card_counts == 16)
+    assert(card_counts == 15*3 or card_counts == 16*3)
 
     if first_seat then
         self.cur_seat = first_seat
@@ -54,8 +54,9 @@ function game:get_first_seat()
     if self.player_counts == 2 then
         return math.random(1, 2)
     else
+        dump(self.player_hand_cards)
         for seat, seat_cards in ipairs(self.player_hand_cards) do
-            for _, card in seat_cards do
+            for _, card in ipairs(seat_cards) do
                 if card == 0x33 then
                     return seat
                 end

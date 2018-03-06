@@ -67,10 +67,10 @@ end
 
 function room:user_ready(account, is_ready)
     self.ready_list[account] = is_ready
-    self:send_all_client("room.user_ready", {account = account,  is_ready = is_ready})
+    self:send_all_client("room.user_ready", self:pack())
 
     if self:check_ready() then
-        room:start()
+        self:start()
     end
 end
 
@@ -114,13 +114,13 @@ end
 function room:on_user_login(player_info)
     if self.game then
         skynet.send(player_info.base_app, "lua", "bind_account_2_game", 
-            player.account, {game = room:get_game(), id = room_id})
+            player.account, {game = self:get_game(), id = room_id})
 
         self:send_client(player_info.account, "system.game_reconnect", 
             {room_id = self.room_id, game_id = self.game_id})
 
         self:send_client(player_info.account, "room.room_info", self:pack())
-        self:send_other_client("room.user_enter", {account = player_info.account})
+        self:send_other_client("room.user_enter", self:pack())
         skynet.send(self.game.addr, "lua", "on_user_login", 
             {room_id = self.room_id, player_info = player_info})
     end
@@ -130,33 +130,35 @@ function room:on_user_offline(account)
     self.ready_list[account] = nil
     self.online_list[account] = nil
 
-    self:send_other_client(account, "room.user_exit", {account = account})
-    self.account_2_player[account] = nil
-
     if self.game then
         skynet.send(self.game.addr, "lua", "on_user_offline", {room_id = self.room_id, account = account})
     else
         local index_to_remove
-        for index, player in ipairs(self.player_list) do
+        for index, player in pairs(self.player_list) do
             if player.account == account then
                 index_to_remove = index
+                break
             end
         end
 
         self.player_list[index_to_remove] = nil
     end
+
+    self:send_other_client(account, "room.user_exit", self:pack())
+    self.account_2_player[account] = nil
 end
 
 function room:join(player_info)
     table.insert(self.player_list, player_info)
+    self.online_list[player_info.account] = true
     self.account_2_player[player_info.account] = player_info
-    self:send_other_client(player_info.account, "room.user_enter", {account = player_info.account})
+    self:send_other_client(player_info.account, "room.user_enter", self:pack())
     return self:pack()
 end
 
 function room:start()
     self.game = skynet.call("game_mgr", "lua", "get_game", self.game_id)
-    skynet.send(game.addr, "lua", "create_game", 
+    skynet.send(self.game.addr, "lua", "create_game", 
         {room_id = self.room_id, player_list = self.player_list, room_conf = self.room_conf})
 end
 

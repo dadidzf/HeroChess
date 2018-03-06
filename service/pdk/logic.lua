@@ -50,8 +50,11 @@ function logic.shuffle(card_counts)
     end
 
     local ret_cards = {{}, {}, {}}
-    for i, card in ipairs(cards) do
-        ret_cards[(i - 1)%card_counts + 1] = card
+    local single_cards_count = card_counts == 48 and 16 or 15
+    for k = 1, 3 do
+        for i = 1, single_cards_count  do
+            ret_cards[k][i] = cards[(k - 1)*single_cards_count + i]
+        end
     end
 
     return ret_cards

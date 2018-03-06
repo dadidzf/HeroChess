@@ -4,10 +4,11 @@ local player_mgr = require "player_mgr"
 local room = {}
 
 function room.create_room(fd, request)
+    request.room_conf = {card_counts = 48}
     local player = player_mgr:get_by_fd(fd)
-    local id = skynet.call("room_mgr", "lua", "create_room", request.game_id, 
+    local roomInfo = skynet.call("room_mgr", "lua", "create_room", request.game_id, 
         {base_app = skynet.self(), account = player:get_account()}, request.room_conf)
-    return {room_id = id}
+    return roomInfo
 end
 
 function room.join_room(fd, request)

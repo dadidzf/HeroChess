@@ -1,5 +1,6 @@
 local game = require("game")
 local match_mgr = require "match_mgr"
+local skynet = require "skynet"
 
 local match = {}
 
@@ -8,11 +9,13 @@ match.__index = match
 function match.new(...)
     local o = {}
     setmetatable(o, match)
-    match:init(o, ...)
+    o:init(...)
     return o
 end
 
 function match:init(info)
+    print("match:init")
+    dump(info)
     self.id = info.room_id
     self.room_conf = info.room_conf
     self.player_list = info.player_list

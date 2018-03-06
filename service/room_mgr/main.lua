@@ -31,7 +31,7 @@ function CMD.on_user_login(player_info)
 end
 
 function CMD.user_ready(account, is_ready)
-    return room_mgr:user_ready(room_id, account, is_ready)
+    return room_mgr:user_ready(account, is_ready)
 end
 
 function CMD.dissolve_room(account, is_dissolve)

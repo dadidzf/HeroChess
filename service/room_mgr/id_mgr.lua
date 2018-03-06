@@ -4,8 +4,8 @@ local id_mgr = {}
 function id_mgr:init()
     math.randomseed(os.time())
     self.tbl =  {}
-    for i = 1, 999999 do
-        self.tbl[i] = i
+    for i = 1, 899999 do
+        self.tbl[i] = i + 100000
     end
 end
 
