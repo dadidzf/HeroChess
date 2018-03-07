@@ -32,7 +32,7 @@ end
 
 function CMD.deal_game_msg(account, msg)
     local match = match_mgr:get(msg.id)
-    return match.deal_msg(account, msg.proto_name, msg.content)
+    return match:deal_msg(account, msg.proto_name, msg.content)
 end
 
 skynet.start(function ()
