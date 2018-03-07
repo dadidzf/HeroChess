@@ -13,7 +13,7 @@ end
 
 function M.init_game_handler()
     for _, name in ipairs(msg_define.getAllGameProtos()) do
-        sock_mgr:register_callback(name, function(...) game.deal_msg(name, ...) end)
+        sock_mgr:register_callback(name, function(...) return game.deal_msg(name, ...) end)
     end
 end
 

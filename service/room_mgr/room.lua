@@ -114,7 +114,7 @@ end
 function room:on_user_login(player_info)
     if self.game then
         skynet.send(player_info.base_app, "lua", "bind_account_2_game", 
-            player.account, {game = self:get_game(), id = room_id})
+            player_info.account, {game = self:get_game(), id = room_id})
 
         self:send_client(player_info.account, "system.game_reconnect", 
             {room_id = self.room_id, game_id = self.game_id})
@@ -160,6 +160,11 @@ function room:start()
     self.game = skynet.call("game_mgr", "lua", "get_game", self.game_id)
     skynet.send(self.game.addr, "lua", "create_game", 
         {room_id = self.room_id, player_list = self.player_list, room_conf = self.room_conf})
+
+    for _, player_info in ipairs(self.player_list) do
+        skynet.send(player_info.base_app, "lua", "bind_account_2_game", 
+            player_info.account, {game = self:get_game(), id = self.room_id})
+    end
 end
 
 function room:pack()

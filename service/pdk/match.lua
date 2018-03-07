@@ -28,6 +28,7 @@ function match:init(info)
     self.next_ready_list = {}
     self:create_game()
     self.game:begin()
+    self:init_dispatch_tbl()
 end
 
 function match:init_dispatch_tbl()

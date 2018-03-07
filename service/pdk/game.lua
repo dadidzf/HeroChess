@@ -71,15 +71,18 @@ function game:on_out_card(seat, content)
     else
         local out_cards = content.cards
         local result, left_cards = self:check_out_cards(seat, out_cards)
-        local is_last = not next(left_cards)
-        local out_card_info = logic.get_type(out_cards, is_last)
 
         if result then
+            local is_last = not next(left_cards)
+            local out_card_info = logic.get_type(out_cards, is_last)
+
             if self.previous_cards_record then
                 local previous_card_info = self.previous_cards_record[#self.previous_cards_record].card_info
                 if not logic.is_big(previous_card_info, out_card_info) then
                     return {errmsg = "error out cards"}
                 end
+            else
+                self.previous_cards_record = {}
             end
 
             table.insert(self.previous_cards_record, 
@@ -104,13 +107,13 @@ function game:on_pass(seat, content)
     else
         assert(self.previous_cards_record)
         local previous_card_info = self.previous_cards_record[#self.previous_cards_record]
-        if logic.is_bigger_cards_exist(previous_card_info, self.player_hand_cards[seat]) then
+        if logic.is_bigger_cards_exist(previous_card_info.card_info, self.player_hand_cards[seat]) then
             return {errmsg = "can not pass, you have bigger cards !"}
         else
             self.cur_seat = self:next_seat(seat)
 
             local new_turn = false
-            if previous_card_info.seat == next(seat) then
+            if previous_card_info.seat == self.cur_seat then
                 self.previous_cards_record = nil -- new turn
                 new_turn = true
             end
@@ -121,13 +124,16 @@ function game:on_pass(seat, content)
 end
 
 function game:check_out_cards(seat, out_cards)
+    print("game:check_out_cards", seat)
+    dump(self.player_hand_cards)
+    dump(out_cards)
     local card_set = {}
     for _, card in ipairs(out_cards) do
         card_set[card] = true
     end
 
     local left_cards = {}
-    for _, card in ipairs(self.player_hand_cards(seat)) do
+    for _, card in ipairs(self.player_hand_cards[seat]) do
         if card_set[card] then
             card_set[card] = nil
         else
@@ -135,7 +141,7 @@ function game:check_out_cards(seat, out_cards)
         end
     end
 
-    if next(card_set) == nil then
+    if next(card_set) then
         return false
     else
         return true, left_cards
@@ -161,7 +167,7 @@ end
 function game:deal_msg(seat, proto_name, content)
     local func_name = _proto_name_map_func_name[proto_name]
     if func_name then
-        return self[func_name](seat, content)
+        return self[func_name](self, seat, content)
     else
         skynet.error("pdk : can not deal message name - ", proto_name)
         return {errmsg = "can not deal"}

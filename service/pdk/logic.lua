@@ -16,7 +16,8 @@ local card_pool = {
     -- 16张玩法(只有一张黑桃2，去除黑桃A外的三张A，无大小王)
     [48] = {
         0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
-        0x11, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x21, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
+        0x11, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x21, 
+        0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
         0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d
     }
 }
@@ -60,8 +61,28 @@ function logic.shuffle(card_counts)
     return ret_cards
 end
 
+function logic.sort(cards)
+    table.sort(cards, function (a, b)
+        return a > b
+    end)
+end
+
+function logic.sort_for_display(cards)
+    table.sort(cards, function (a, b)
+        local indexA = logic.get_card_index(a)
+        local indexB = logic.get_card_index(b)
+        if indexA > indexB then
+            return true
+        elseif indexA < indexB then
+            return false
+        else
+            return a > b
+        end
+    end)
+end
+
 function logic.get_card_index(card)
-    local c = card & 0x0f
+    local c = math.fmod(card, 16)
     if c == 0x01 then 
         return 14
     elseif c == 0x02 then
@@ -444,12 +465,8 @@ function logic.is_bigger_t_32_exist(out_card, counts, cards)
     end
 
     local count3 = counts[3]
-    if cards[3][count3] > out_card then
-        if counts[2]*2 + counts[1] <= 2 then
-            return true
-        else
-            return false
-        end
+    if count3 > 0 and cards[3][count3] > out_card then
+        return true
     else
         return false
     end
