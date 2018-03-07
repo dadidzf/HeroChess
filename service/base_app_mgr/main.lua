@@ -11,6 +11,14 @@ function CMD.start()
     base_app_mgr:start_base_apps()
 end
 
+local server_List = {["198.11.178.248"] = "www.yongwuart.com"}
+local server_domain = server_List[(io.popen "curl ifconfig.me")]
+if not server_domain then
+    server_domain = "192.168.0.104"
+end
+
+print("-------------", server_domain)
+
 -- 为玩家分配一个baseapp
 function CMD.get_base_app_addr()
     for addr, info in pairs(base_app_mgr:get_base_app_tbl()) do
@@ -18,7 +26,7 @@ function CMD.get_base_app_addr()
         skynet.error(string.format("Current client counts of port %d is %d", info.port, clients))
 
         if clients < 1000 then
-            return {ip = "192.168.0.104", port = info.port, token = "token"}
+            return {ip = server_domain, port = info.port, token = "token"}
         end
     end
 
