@@ -19,7 +19,7 @@ if not server_domain then
     server_domain = "192.168.0.104"
 end
 
-print("-------------", server_domain)
+print("base_app_mgr-------------", server_domain)
 
 -- 为玩家分配一个baseapp
 function CMD.get_base_app_addr()
