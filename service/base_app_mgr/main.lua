@@ -25,7 +25,7 @@ if not server_domain then
     end
 end
 
-print("base_app_mgr-------------", server_domain)
+print("Server_domain-------------", server_domain)
 
 -- 为玩家分配一个baseapp
 function CMD.get_base_app_addr()
