@@ -12,7 +12,9 @@ function CMD.start()
 end
 
 local server_List = {["198.11.178.248"] = "www.yongwuart.com"}
-local server_domain = server_List[(io.popen "curl ifconfig.me")]
+local my_internet_ip = (io.popen "curl icanhazip.com"):read "*a"
+my_internet_ip = string.gsub(my_internet_ip, "%s", "")
+local server_domain = server_List[my_internet_ip]
 if not server_domain then
     server_domain = "192.168.0.104"
 end
