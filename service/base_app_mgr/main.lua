@@ -16,7 +16,14 @@ local my_internet_ip = (io.popen "curl icanhazip.com"):read "*a"
 my_internet_ip = string.gsub(my_internet_ip, "%s", "")
 local server_domain = server_List[my_internet_ip]
 if not server_domain then
-    server_domain = "192.168.0.104"
+    local macLanIp  = (io.popen [[ifconfig en0 | grep "inet " | awk '{print $2}']]):read "*a"
+    local linuxLanIp = (io.popen [[ifconfig eth0 | grep "inet " | awk -F: '{print $2}' | awk '{print $1}']]):read "*a"
+    print("---------------", #macLanIp, #linuxLanIp)
+    if not string.find(macLanIp, "not") then
+        server_domain = macLanIp
+    elseif not string.find(linuxLanIp, "not") then
+        server_domain = linuxLanIp
+    end
 end
 
 print("base_app_mgr-------------", server_domain)
