@@ -18,10 +18,9 @@ local server_domain = server_List[my_internet_ip]
 if not server_domain then
     local macLanIp  = (io.popen [[ifconfig en0 | grep "inet " | awk '{print $2}']]):read "*a"
     local linuxLanIp = (io.popen [[ifconfig eth0 | grep "inet " | awk -F: '{print $2}' | awk '{print $1}']]):read "*a"
-    print("---------------", #macLanIp, #linuxLanIp)
-    if not string.find(macLanIp, "not") then
+    if #macLanIp > 0 then
         server_domain = macLanIp
-    elseif not string.find(linuxLanIp, "not") then
+    elseif #linuxLanIp > 0  then
         server_domain = linuxLanIp
     end
 end
