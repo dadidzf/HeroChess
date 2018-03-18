@@ -19,9 +19,9 @@ if not server_domain then
     local macLanIp  = (io.popen [[ifconfig en0 | grep "inet " | awk '{print $2}']]):read "*a"
     local linuxLanIp = (io.popen [[ifconfig eth0 | grep "inet " | awk -F: '{print $2}' | awk '{print $1}']]):read "*a"
     if #macLanIp > 0 then
-        server_domain = macLanIp
+        server_domain = string.gsub(macLanIp, "%s", "")
     elseif #linuxLanIp > 0  then
-        server_domain = linuxLanIp
+        server_domain = string.gsub(linuxLanIp, "%s", "")
     end
 end
 
