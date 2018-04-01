@@ -19,16 +19,16 @@ function M:init()
 end
 
 function M:load_player(account)
-    local obj = self.mongo:find_one("player",{account = account},{_id = false})
+    local obj = self.mongo:find_one("account", {account = account}, {_id = false})
     return obj
 end
 
 function M:save_player(obj)
-    self.mongo:insert("player", obj)
+    self.mongo:insert("account", obj)
 end
 
 function M:update_player(account, content)
-    self.mongo:update("player", {query = {account = account}, update = {["$set"] = content}})
+    self.mongo:update("account", {query = {account = account}, update = {["$set"] = content}})
 end
 
 return M

@@ -3,6 +3,9 @@ local skynet = require "skynet"
 local function main()
     skynet.newservice("debug_console", 8081)
 
+    -- webclient
+    skynet.uniqueservice("webclient")
+
     -- login service
     local login = skynet.newservice("login")
     skynet.call(login, "lua", "start", {

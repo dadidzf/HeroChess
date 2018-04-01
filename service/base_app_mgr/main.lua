@@ -28,13 +28,14 @@ end
 print("Server_domain-------------", server_domain)
 
 -- 为玩家分配一个baseapp
-function CMD.get_base_app_addr()
+function CMD.get_base_app_addr(account)
     for addr, info in pairs(base_app_mgr:get_base_app_tbl()) do
         local clients = skynet.call(addr, "lua", "get_clients")
         skynet.error(string.format("Current client counts of port %d is %d", info.port, clients))
 
         if clients < 1000 then
-            return {ip = server_domain, port = info.port, token = "token"}
+            local token = skynet.call(addr, "lua", "get_token", account)
+            return {ip = server_domain, port = info.port, token = token}
         end
     end
 

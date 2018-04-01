@@ -2,6 +2,7 @@ local skynet = require "skynet"
 require "skynet.manager"
 local sock_mgr = require "sock_mgr"
 local account_mgr = require "account_mgr"
+require "my_init"
 
 local CMD = {}
 

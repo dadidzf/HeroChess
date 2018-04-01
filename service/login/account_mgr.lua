@@ -1,6 +1,7 @@
 local skynet = require "skynet"
 local MongoLib = require "mongolib"
 local utils = require "utils"
+local constants = require "constants"
 
 local mongo_host = "127.0.0.1"
 local mongo_db = "herochess"
@@ -27,6 +28,7 @@ function account_mgr:init()
     self.rest_account_tbl = {}
 
     self:load_all()
+
 end
 
 function account_mgr:load_all()
@@ -93,11 +95,67 @@ function account_mgr:register(username, passwd)
         return false, "username exists"
     end
 
-    local user_info = {username = username, passwd = passwd, account = self:gen_new_account()}
+    local user_info = 
+    {
+        username = username, 
+        nickname = username,
+        passwd = passwd, 
+        account = self:gen_new_account(),
+        access_token = "",
+        refresh_token = "",
+        openid = "",
+        scope = "",
+        unionid = "tourist",
+        expires_in = "",
+        sex = 1,
+        headimgurl = "systemHead_"..tostring(math.random(1, 8))..".jpg",
+        exp = constants.INIT_EXP,
+        golds = constants.INIT_GOLDS
+    }
     self.user_tbl[username] = user_info 
     self.mongo:insert("account", user_info)
 
     return true, account
+end
+
+function account_mgr:wechat_register(auth_info)
+    local user = self.user_tbl[auth_info.unionid]
+
+    if user then
+        self.mongo:update("account", {query = {account = user.account}, 
+            update = {["$set"] = {
+                account = user.account,
+                access_token = auth_info.access_token, 
+                refresh_token = auth_info.refresh_token,
+                openid = auth_info.openid,
+                scope = auth_info.scope,
+                expires_in = auth_info.expires_in
+            }}})
+        return user.account 
+    else
+        -- wechat don't need passwd, so we set wechat passwd to ""
+        local user_info = 
+        {
+            username = auth_info.unionid, 
+            nickname = "",
+            passwd = "", 
+            account = self:gen_new_account(),
+            access_token = auth_info.access_token,
+            refresh_token = auth_info.refresh_token,
+            openid = auth_info.openid,
+            scope = auth_info.scope,
+            unionid = auth_info.unionid,
+            expires_in = auth_info.expires_in,
+            sex = 1,
+            headimgurl = "",
+            exp = constants.INIT_EXP,
+            golds = constants.INIT_GOLDS
+        }
+        self.user_tbl[user_info.username] = user_info
+        self.mongo:insert("account", user_info)
+
+        return user_info.account
+    end
 end
 
 function account_mgr:check_register_fmt(username, passwd)

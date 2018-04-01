@@ -2,12 +2,19 @@ local sock_mgr = require "sock_mgr"
 local msg_define = require "msg_define"
 local room = require ("msg_handler.room")
 local game = require ("msg_handler.game")
+local system = require ("msg_handler.system")
 
 local M = {}
 
 function M.init_room_handler()
     for func_name, func in pairs(room) do
         sock_mgr:register_callback("room."..func_name, func)
+    end
+end
+
+function M.init_system_handler()
+    for func_name, func in pairs(system) do
+        sock_mgr:register_callback("system."..func_name, func)
     end
 end
 

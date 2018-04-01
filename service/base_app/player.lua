@@ -13,44 +13,58 @@ function player.create(...)
     return o
 end
 
-function player:init(fd, account, username)
+function player:init(fd, account)
     self.fd = fd
     self.account = account
-    self.username = username
-    self.status = "load from db"
+    self:load_from_db()
 end
 
 function player:load_from_db()
     local obj = db:load_player(self.account)
     if obj then
         self._db = obj
-    else
-        self:_create_db()
     end
 end
 
-function player:_create_db()
-    local obj = {
-        account = self.account,
-        nick_name = self.username,
-        exp = 0,
-        golds = 0
-    }
-    db:save_player(obj)
-    self._db = obj
+function player:getDb()
+    return self._db
 end
 
 function player:pack()
     return {
         account = self.account,
-        nick_name = self._db.nick_name,
+        nick_name = self._db.nickname,
         exp = self._db.exp,
-        golds = self._db.golds
+        golds = self._db.golds,
+        headimgurl = self._db.headimgurl
     }
+end
+
+function player:get_nickname()
+    return self._db.username
+end
+
+function player:get_unionid()
+    return self._db.unionid
+end
+
+function player:get_access_token()
+    return self._db.access_token
+end
+
+function player:get_openid()
+    return self._db.openid
 end
 
 function player:get_info()
     return self:pack() 
+end
+
+function player:update_wechat_user_info(headimgurl, sex, nickname)
+    self._db.headimgurl = headimgurl
+    self._db.sex = sex
+    self._db.nickname = nickname
+    db:update_player(self.account, {headimgurl = headimgurl, sex = sex, nickname = nickname})
 end
 
 function player:update_golds(golds)

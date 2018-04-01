@@ -4,6 +4,9 @@ local utils = require "utils"
 local packer = require "packer"
 local account_mgr = require "account_mgr"
 local msg_define = require "msg_define"
+local cjson = require "cjson"
+local constants = require "constants"
+local webclient
 
 local sock_mgr = {}
 
@@ -15,6 +18,8 @@ function sock_mgr:start(conf)
     skynet.error("login service listen on port "..conf.port)
 
     self:register_callback()
+
+    webclient = skynet.queryservice("webclient")
 end
 
 -------------------处理socket消息开始--------------------
@@ -54,6 +59,7 @@ function sock_mgr:register_callback()
     self.dispatch_tbl = {
         ["login.login"] = self.login,
         ["login.register"] = self.register,
+        ["login.wechat_login"] = self.wechat_login,
     }
 end
 
@@ -66,10 +72,13 @@ function sock_mgr:dispatch(fd, proto_id, proto_name, params)
 
     local ret_msg = f(self, fd, params)
     if ret_msg then
+        local close_socket = ret_msg.close_socket
+        ret_msg.close_socket = nil
+
         skynet.error("ret msg:"..utils.table_2_str(ret_msg))
         socket.write(fd, packer.pack(proto_id, ret_msg))
 
-        if ret_msg.close_socket then
+        if close_socket then
             skynet.call(self.gate, "lua", "kick", fd)
         end
     end
@@ -83,9 +92,9 @@ function sock_mgr:login(fd, msg)
     end
 
     local user = account_mgr:get_by_username(msg.username)
-    local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr")
+    local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", user.account)
     ret.close_socket = true
-    ret.user = user
+    ret.account = account 
 
     return ret
 end
@@ -99,6 +108,31 @@ function sock_mgr:register(fd, msg)
         return {errmsg = info}
     end
 end
+
+-- wechat 
+function sock_mgr:wechat_login(fd, msg)
+    local result, content = skynet.call(webclient, "lua", "request", 
+            constants.WECHAT_AUTH_URL, 
+            {
+                appid = constants.APP_ID, 
+                code = msg.code, grant_type = "authorization_code", 
+                secret = constants.APP_SECRET
+            }
+        )
+    local auth_info = cjson.decode(content)
+    dump(auth_info)
+    if auth_info.errcode then
+        return {errmsg = auth_info}
+    else
+        local account = account_mgr:wechat_register(auth_info)
+        local ret = skynet.call("base_app_mgr", "lua", "get_base_app_addr", account)
+        ret.close_socket = true
+        ret.account = account
+
+        return ret
+    end
+end
+
 
 -------------------网络消息回调函数结束------------------
 

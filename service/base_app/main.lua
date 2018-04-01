@@ -34,6 +34,10 @@ function CMD.update_golds(account, golds)
     end
 end
 
+function CMD.get_token(account)
+    return login_mgr:generate_account_token(account)
+end
+
 function CMD.get_clients()
     return sock_mgr:get_clients()
 end
