@@ -27,6 +27,7 @@ end
 function M.init()
     M.init_room_handler()
     M.init_game_handler()
+    M.init_system_handler()
 end
 
 return M
