@@ -57,6 +57,8 @@ function room_mgr:user_ready(account, is_ready)
     local room = self.player_2_room[account] 
     if room then
         room:user_ready(account, is_ready)
+    else
+        print("room_mgr:user_ready, room not exist")
     end
 end
 
